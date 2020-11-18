@@ -3,6 +3,11 @@ name = "beelzebub"
 version = "0.1.0"
 description = "Lightweight framework for transforming input to output"
 authors = ["Paul Breen <paul.breen6@btinternet.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+repository = "https://github.com/paul-breen/beelzebub"
+homepage = "https://github.com/paul-breen/beelzebub"
+documentation = "https://raw.githubusercontent.com/paul-breen/beelzebub/main/README.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"

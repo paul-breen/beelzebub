@@ -7,7 +7,7 @@ readme = "README.md"
 license = "Apache-2.0"
 repository = "https://github.com/paul-breen/beelzebub"
 homepage = "https://github.com/paul-breen/beelzebub"
-documentation = "https://github.com/paul-breen/beelzebub/main/README.md"
+documentation = "https://github.com/paul-breen/beelzebub/blob/main/README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"

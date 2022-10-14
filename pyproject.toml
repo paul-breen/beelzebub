@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "beelzebub"
-version = "0.1.1"
+version = "0.1.2"
 description = "Lightweight framework for transforming input to output"
 authors = ["Paul Breen <paul.breen6@btinternet.com>"]
 readme = "README.md"
 license = "Apache-2.0"
 repository = "https://github.com/paul-breen/beelzebub"
 homepage = "https://github.com/paul-breen/beelzebub"
-documentation = "https://raw.githubusercontent.com/paul-breen/beelzebub/main/README.md"
+documentation = "https://github.com/paul-breen/beelzebub/main/README.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.8"
 logging-config = "^1.0.4"
-Jinja2 = "^2.11.2"
+Jinja2 = "^3.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

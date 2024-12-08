@@ -7,9 +7,14 @@
 
 __version__ = '0.1.2'
 
+import logging
 import logging.config
 import io
+import urllib.parse
 import jinja2
+import fsspec
+
+logger = logging.getLogger(__name__)
 
 class BaseContextManager(object):
     """
@@ -65,20 +70,60 @@ class BaseContextManager(object):
 
         return False         # This ensures any exception is re-raised
 
-    def open(self, iostream=None, iotype='', mode='r', encoding='utf-8'):
+    def _construct_open_opts(self):
+        """
+        Construct the options for the iostream open() call based on
+        self.iotype, the kwargs passed to self.open() and self.conf
+
+        :returns: opts
+        :rtype: dict
+        """
+
+        opts = {}
+
+        if self.iotype.lower() == 'file' or self.iotype.lower() == 'url':
+            'mode' in self.conf and opts.update({'mode': self.conf['mode']})
+            'encoding' in self.conf and opts.update({'encoding': self.conf['encoding']})
+        elif self.iotype.lower() == 'str':
+            'encoding' in self.conf and opts.update({'encoding': self.conf['encoding']})
+
+        logger.debug(f"effective open() options = {opts}")
+
+        return opts
+
+    def open(self, iostream=None, iotype='', mode=None, encoding=None, **fs_opts):
         """
         Open the given iostream
 
+        The effective configuration is established in the following order
+        of precedence:
+
+        * Any non-None kwargs are used to update corresponding self.conf item
+        * The self.conf values are used as-provided
+        * Any missing self.conf values will use system built-in defaults
+
+        If a local iostream (iotype=file) or a remote iostream (iotype=url)
+        is binary, then the mode should include the binary flag (e.g. 'rb')
+        and encoding must not be specified.  If the local or remote iostream
+        is text, then omit the binary flag and optionally provide an encoding
+        if required.  If iotype=str, then mode must not be specified and
+        encoding is only required if it is not the system default
+
         :param iostream: Iostream (file path, URL, or str)
         :type iostream: str
-        :param iotype: Type of the iostream ['file','url','str']
+        :param iotype: Type of the iostream ['file','url','str'].  Raises
+        TypeError if iotype is not one of these supported types
         :type iotype: str
-        :param mode: Mode in which to open if iostream is a file
+        :param mode: Mode in which to open if iostream is a file or url
         :type mode: str
-        :param encoding: Encoding if iostream is a file
+        :param encoding: Encoding if iostream is text
         :type encoding: str
+        :param fs_opts: Any kwargs required for opening a url type iostream
+        using fsspec
+        :type fs_opts: dict
         :returns: This object
         :rtype: BeelzebubBaseContextManager
+        :raises: TypeError
         """
 
         if iostream:
@@ -87,12 +132,32 @@ class BaseContextManager(object):
         if iotype:
             self.iotype = iotype
 
+        if mode:
+            self.conf['mode'] = mode
+
+        if encoding:
+            self.conf['encoding'] = encoding
+
+        if fs_opts:
+            'fs_opts' in self.conf or self.conf.update({'fs_opts': {}})
+            self.conf['fs_opts'].update(**fs_opts)
+
+        logger.debug(f"effective iostream configuration = {self.conf}")
+
+        opts = self._construct_open_opts()
+
         if self.iotype.lower() == 'file':
-            self.fp = io.open(self.iostream, mode, encoding=encoding)
+            self.fp = io.open(self.iostream, **opts)
         elif self.iotype.lower() == 'url':
-            self.fp = io.open(self.iostream)
+            protocol = urllib.parse.urlparse(self.iostream).scheme
+            fs = fsspec.filesystem(protocol, **fs_opts)
+            self.fp = fs.open(self.iostream, **opts)
+            self.fp.remote = True
+            self.fp.protocol = protocol
+        elif self.iotype.lower() == 'str':
+            self.fp = io.StringIO(self.iostream, **opts)
         else:
-            self.fp = io.StringIO(self.iostream)
+            raise TypeError(f"unsupported iotype {self.iotype}")
 
         return self
 
@@ -124,12 +189,16 @@ class BaseReader(BaseContextManager):
         super().__init__(**kwargs)
         self.input = None
 
-    def open(self, mode='r', **kwargs):
+    def open(self, mode=None, **kwargs):
         """
         Open the given iostream
 
+        If mode is not provided nor set in self.conf, then it defaults to 'r'
+
         Takes the same arguments as super.open()
         """
+
+        mode = mode or self.conf.get('mode', 'r')
 
         return super().open(mode=mode, **kwargs)
 
@@ -166,12 +235,16 @@ class BaseWriter(BaseContextManager):
         super().__init__(**kwargs)
         self.output = None
 
-    def open(self, mode='w', **kwargs):
+    def open(self, mode=None, **kwargs):
         """
         Open the given iostream
 
+        If mode is not provided nor set in self.conf, then it defaults to 'w'
+
         Takes the same arguments as super.open()
         """
+
+        mode = mode or self.conf.get('mode', 'w')
 
         return super().open(mode=mode, **kwargs)
 

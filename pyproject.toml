@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beelzebub"
-version = "0.1.2"
+version = "1.0.0"
 description = "Lightweight framework for transforming input to output"
 authors = ["Paul Breen <paul.breen6@btinternet.com>"]
 readme = "README.md"

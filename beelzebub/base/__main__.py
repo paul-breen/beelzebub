@@ -11,15 +11,17 @@ LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
-def parse_cmdln():
+def parse_cmdln(prog=None):
     """
     Parse the command line
 
+    :param prog: The program name (for command line help)
+    :type prog: str
     :returns: An object containing the command line arguments and options
     :rtype: argparse.Namespace
     """
 
-    parser = argparse.ArgumentParser(prog=PROGNAME)
+    parser = argparse.ArgumentParser(prog=prog)
 
     parser.add_argument('in_file', help='file or - for stdin')
     parser.add_argument('out_file', help='file or - for stdout')
@@ -63,7 +65,7 @@ def update_conf_from_cmdln(conf, args):
     return conf
 
 def main():
-    args = parse_cmdln()
+    args = parse_cmdln(prog=PROGNAME)
     conf = update_conf_from_cmdln(INIT_CONF, args)
 
     x = BaseWorkflow(conf=conf)

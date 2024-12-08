@@ -16,6 +16,11 @@ import fsspec
 
 logger = logging.getLogger(__name__)
 
+INIT_CONF = {
+    'reader': {'iotype': 'file'},
+    'writer': {'iotype': 'file'},
+}
+
 class BaseContextManager(object):
     """
     Context manager base class
